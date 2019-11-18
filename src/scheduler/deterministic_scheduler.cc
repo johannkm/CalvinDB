@@ -408,17 +408,19 @@ LOG(ERROR) <<machine_id<< ":*********In LockManagerThread:  release remaster txn
           waiting_txns_by_key_.erase(key_info);
         } 
 
-
-        for (uint32 i = 0; i < ready_to_lock_txns.size(); i++) {
-          lock_manager_->Lock(ready_to_lock_txns[i]);
-          pending_txns++; 
-//LOG(ERROR) <<machine_id<< ":*********In LockManagerThread:  remaster txn wake up ready txn(acquire lock): "<<ready_to_lock_txns[i]->txn_id();
-        }
+//         Disabled locking
+//         for (uint32 i = 0; i < ready_to_lock_txns.size(); i++) {
+//           lock_manager_->Lock(ready_to_lock_txns[i]);
+//           pending_txns++; 
+// //LOG(ERROR) <<machine_id<< ":*********In LockManagerThread:  remaster txn wake up ready txn(acquire lock): "<<ready_to_lock_txns[i]->txn_id();
+//         }
+        pending_txns += ready_to_lock_txns.size();
       } // end  if (mode_ == 2 && done_txn->remaster_txn() == true) 
 
       // We have received a finished transaction back, release the lock
       if (done_txn->status() != TxnProto::ABORTED_WITHOUT_LOCK) {
-        lock_manager_->Release(done_txn);
+        // Disabled locking
+        // lock_manager_->Release(done_txn);
 //if (machine_id == 0)
 //LOG(ERROR) <<machine_id<< ":^^^^^^^^^^^In LockManagerThread:  realeasing txn: "<<done_txn->txn_id()<<" origin:"<<done_txn->origin_replica()<<"  involved_replicas:"<<done_txn->involved_replicas_size();
       } else {
@@ -525,7 +527,8 @@ LOG(ERROR) <<machine_id<< ":*********In LockManagerThread:  receive remaster txn
           }
         } // end if (mode_ == 2)
 
-        lock_manager_->Lock(txn);
+        // Disabled locking
+        // lock_manager_->Lock(txn);
         pending_txns++;
 //if (machine_id == 0)
 //LOG(ERROR) <<machine_id<< ":^^^^^^^^^^^In LockManagerThread:  locking txn: "<<txn->txn_id()<<" origin:"<<txn->origin_replica()<<"  involved_replicas:"<<txn->involved_replicas_size();
