@@ -38,7 +38,7 @@ LocalPaxos::LocalPaxos(ClusterConfig* config, ConnectionMultiplexer* connection,
 //  CPU_SET(2, &cpuset);
 //  CPU_SET(6, &cpuset);
 CPU_SET(0, &cpuset);
-  pthread_attr_setaffinity_np(&attr_writer, sizeof(cpu_set_t), &cpuset);
+  //pthread_attr_setaffinity_np(&attr_writer, sizeof(cpu_set_t), &cpuset);
 
   if (IsLeader()) {
     if (type != 2) {
@@ -206,7 +206,7 @@ void LocalPaxos::RunLeader() {
   int alternate = 0;
 
   while (go_) {
-    LOG(INFO) << "inside paxos:RunLeader()";
+//LOG(INFO) << "inside paxos:RunLeader()";
     // Sleep while there are NO requests.
     while (local_count_.load() == 0 && sequences_other_replicas_.Size() == 0) {
       usleep(20);
@@ -353,13 +353,13 @@ void LocalPaxos::RunLeader() {
     // Actually append the request into the log
     if (isLocal == true) {
       local_log_->Append(local_next_version, encoded);
-      LOG(INFO) << "wrote to local_log_";
+//LOG(INFO) << "wrote to local_log_";
 //if (configuration_->local_node_id() == 0)
 //LOG(INFO) << configuration_->local_node_id()<< "---In paxos:  Append to local log. version: "<<local_next_version;
     }
     global_log_->Append(global_next_version, encoded);
-    LOG(INFO) << "wrote to global_log_";
-    LOG(INFO) << "global log: " << global_log_->GetReader()->ToString();
+//LOG(INFO) << "wrote to global_log_";
+//LOG(INFO) << "global log: " << global_log_->GetReader()->ToString();
 //if (configuration_->local_node_id() == 0)
 //LOG(INFO) << configuration_->local_node_id()<< "---In paxos:  Append to global log. version: "<<global_next_version;
 
@@ -771,7 +771,7 @@ void LocalPaxos::RunLeaderStrong() {
         }
 
 if (latest_version == 0)
-LOG(INFO) << "--------------- this replica is: "<<local_replica_<<",,,,,, plan to send to replica:"<<pending_replica;
+//LOG(INFO) << "--------------- this replica is: "<<local_replica_<<",,,,,, plan to send to replica:"<<pending_replica;
         CHECK(latest_version != 0);
         
         string sequence_batch_string;

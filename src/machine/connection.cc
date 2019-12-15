@@ -48,7 +48,7 @@ CPU_SET(0, &cpuset);
 //CPU_SET(5, &cpuset);
 //CPU_SET(6, &cpuset);
 //CPU_SET(7, &cpuset);
-pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpuset);
+//pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpuset);
 
 
   // Start Multiplexer main loop running in background thread.
@@ -125,7 +125,7 @@ void ConnectionMultiplexer::Run() {
       if (channel_results_.Count(channel) > 0) {
         // Channel name already in use. Report an error and set new_connection_
         // (which NewConnection() will return) to NULL.
-        LOG(INFO) << "Attempt to create channel that already exists: "<< channel;
+//LOG(INFO) << "Attempt to create channel that already exists: "<< channel;
         return ;
       }
   

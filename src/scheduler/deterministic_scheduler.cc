@@ -56,7 +56,7 @@ DeterministicScheduler::DeterministicScheduler(ClusterConfig* conf,
   pthread_attr_init(&attr1);
   CPU_ZERO(&cpuset);
 CPU_SET(0, &cpuset);
-  pthread_attr_setaffinity_np(&attr1, sizeof(cpu_set_t), &cpuset); 
+  //pthread_attr_setaffinity_np(&attr1, sizeof(cpu_set_t), &cpuset); 
   pthread_create(&lock_manager_thread_, &attr1, LockManagerThread, reinterpret_cast<void*>(this));
 
   // Start all worker threads.
@@ -71,7 +71,7 @@ CPU_SET(0, &cpuset);
       CPU_SET(i+2, &cpuset);
     }*/
 
-    pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpuset);
+    //pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpuset);
 
     pthread_create(&(threads_[i]), &attr, WorkerThread, reinterpret_cast<void*>(new pair<uint32, DeterministicScheduler*>(i, this)));
   }
@@ -187,7 +187,7 @@ MessageProto* DeterministicScheduler::GetBatch() {
      if (global_batches_order_.count(current_sequence_id_) > 0) {
 
        MessageProto* sequence_message = global_batches_order_[current_sequence_id_];
-      LOG(INFO) << sequence_message->destination_node()<< ":In scheduler:  found the batch at seq: "<<current_sequence_id_;
+//LOG(INFO) << sequence_message->destination_node()<< ":In scheduler:  found the batch at seq: "<<current_sequence_id_;
 
        current_sequence_ = new Sequence();
        current_sequence_->ParseFromString(sequence_message->data(0));
@@ -201,12 +201,12 @@ MessageProto* DeterministicScheduler::GetBatch() {
        MessageProto* message = new MessageProto();
        while (connection_->GotMessage("scheduler_", message)) {
          if (message->type() == MessageProto::TXN_SUBBATCH) {
-LOG(INFO) << message->destination_node()<<"In scheduler:  receive a subbatch: "<<message->batch_number();
+//LOG(INFO) << message->destination_node()<<"In scheduler:  receive a subbatch: "<<message->batch_number();
 //CHECK(message->data_size() > 0);
            batches_data_[message->batch_number()] = message;
            message = new MessageProto();
          } else if (message->type() == MessageProto::PAXOS_BATCH_ORDER) {
-LOG(INFO)<< message->destination_node()<< ":In scheduler:  receive a sequence: "<<message->misc_int(0);
+//LOG(INFO)<< message->destination_node()<< ":In scheduler:  receive a sequence: "<<message->misc_int(0);
            if (message->misc_int(0) == current_sequence_id_) {
 //if (message->destination_node() == 0)
 // LOG(INFO) << message->destination_node()<< ":In scheduler:  find the sequence: "<<message->misc_int(0);
@@ -251,7 +251,7 @@ LOG(INFO)<< message->destination_node()<< ":In scheduler:  receive a sequence: "
      MessageProto* message = new MessageProto();
      while (connection_->GotMessage("scheduler_", message)) {
        if (message->type() == MessageProto::TXN_SUBBATCH) {
-LOG(INFO) << message->destination_node()<<"In scheduler:  receive a subbatch: "<<message->batch_number();
+//LOG(INFO) << message->destination_node()<<"In scheduler:  receive a subbatch: "<<message->batch_number();
 //CHECK(message->data_size() > 0);
          if ((uint64)(message->batch_number()) == current_batch_id_) {
 //LOG(ERROR) << message->destination_node()<<": ^^^^^In scheduler:  got the batch_id wanted: "<<current_batch_id_;
@@ -334,7 +334,7 @@ void DeterministicScheduler::RunLockManagerThread() {
   for (uint64 i = 0; i < (uint64)(configuration_->all_nodes_size()); i++) {
     synchronization_message.set_destination_node(i);
     if (i != static_cast<uint64>(configuration_->local_node_id())) {
-      LOG(INFO) << configuration_->local_node_id() << "Sent message to " << i;
+//LOG(INFO) << configuration_->local_node_id() << "Sent message to " << i;
       connection_->Send(synchronization_message);
     }
   }
@@ -349,7 +349,7 @@ void DeterministicScheduler::RunLockManagerThread() {
   }
 
   connection_->DeleteChannel("synchronization_scheduler_channel");
-LOG(INFO) << "In LockManagerThread:  After synchronization. Starting scheduler thread.";
+//LOG(INFO) << "In LockManagerThread:  After synchronization. Starting scheduler thread.";
 
   start_working_ = true;
 
@@ -370,7 +370,7 @@ LOG(INFO) << "In LockManagerThread:  After synchronization. Starting scheduler t
   
   // For original CalvinDB high contention: Get better performance if set it smaller
   // For AsyCalvinDB with multi-replica txns: should set maximum_txns much bigger
-  uint64 maximum_txns = 10000000; // 10000000
+  uint64 maximum_txns = 1000; // 10000000
   uint64 num_txns_once = 10;
 
   while (true) {
@@ -378,7 +378,7 @@ LOG(INFO) << "In LockManagerThread:  After synchronization. Starting scheduler t
     while (done_queue_->Pop(&done_txn) == true) {
       // Handle remaster transactions     
       if (mode_ == 2 && done_txn->remaster_txn() == true) {
-LOG(INFO) <<machine_id<< ":*********In LockManagerThread:  release remaster txn: "<<done_txn->txn_id();
+//LOG(INFO) <<machine_id<< ":*********In LockManagerThread:  release remaster txn: "<<done_txn->txn_id();
       
         // Check whether remaster txn can wake up some blocking txns
         KeyEntry key_entry = done_txn->read_write_set(0);
@@ -439,12 +439,12 @@ LOG(INFO) <<machine_id<< ":*********In LockManagerThread:  release remaster txn:
         txns++;       
       }
 
-LOG(INFO) <<machine_id<< ":*********In LockManagerThread:  Finish executing the  txn: "<<done_txn->txn_id()<<"  origin:"<<done_txn->origin_replica();
+//LOG(INFO) <<machine_id<< ":*********In LockManagerThread:  Finish executing the  txn: "<<done_txn->txn_id()<<"  origin:"<<done_txn->origin_replica();
 #ifdef LATENCY_TEST
     if (done_txn->txn_id() % SAMPLE_RATE == 0 && latency_counter < SAMPLES && done_txn->origin_replica() == local_replica && done_txn->generated_machine() == local_machine) {
       scheduler_unlock[done_txn->txn_id()] = GetTime();
       latency_counter++;
-      LOG(INFO) << "  Latency Counter: " << latency_counter;
+//LOG(INFO) << "  Latency Counter: " << latency_counter;
       measured_latency.push_back(scheduler_unlock[done_txn->txn_id()] - sequencer_recv[done_txn->txn_id()]);
     }
 
@@ -456,14 +456,14 @@ LOG(INFO) <<machine_id<< ":*********In LockManagerThread:  Finish executing the 
         report.append(DoubleToString(measured_latency[i]*1000) + "\n");
       }
 
-      LOG(INFO) << "Finished. Write out to /tmp/report";
+//LOG(INFO) << "Finished. Write out to /tmp/report";
 
       string filename = "/tmp/report." + UInt64ToString(machine_id);
 
       std::ofstream file(filename);
       file << report;
 
-LOG(INFO) <<"^^^^^^^^^^^^^^:"<< machine_id<<": reporting latencies to " << filename;
+//LOG(INFO) <<"^^^^^^^^^^^^^^:"<< machine_id<<": reporting latencies to " << filename;
 
     }
 #endif
@@ -475,7 +475,7 @@ LOG(INFO) <<"^^^^^^^^^^^^^^:"<< machine_id<<": reporting latencies to " << filen
     if (batch_message == NULL) {
       batch_message = GetBatch();
 /**if (batch_message != NULL) {
-LOG(INFO) <<machine_id<< ":In LockManagerThread:  got a batch(1): "<<batch_message->batch_number()<<" size:"<<batch_message->data_size();
+//LOG(INFO) <<machine_id<< ":In LockManagerThread:  got a batch(1): "<<batch_message->batch_number()<<" size:"<<batch_message->data_size();
 } **/
     // Done with current batch, get next.
     } else if (batch_offset >= batch_message->data_size()) {
@@ -483,7 +483,7 @@ LOG(INFO) <<machine_id<< ":In LockManagerThread:  got a batch(1): "<<batch_messa
         delete batch_message;
         batch_message = GetBatch();
 /**if (batch_message != NULL) {
-LOG(INFO) <<machine_id<< ":In LockManagerThread:  got a batch(2): "<<batch_message->batch_number()<<" size:"<<batch_message->data_size();
+//LOG(INFO) <<machine_id<< ":In LockManagerThread:  got a batch(2): "<<batch_message->batch_number()<<" size:"<<batch_message->data_size();
 }**/ 
     // Current batch has remaining txns, grab up to num_txns_once.
     } else if (executing_txns + pending_txns < maximum_txns) {
@@ -498,7 +498,7 @@ LOG(INFO) <<machine_id<< ":In LockManagerThread:  got a batch(2): "<<batch_messa
         batch_offset++;
 
 /**if (txn->remaster_txn() == true) {
-LOG(INFO) <<machine_id<< ":*********In LockManagerThread:  receive remaster txn: "<<txn->txn_id();
+//LOG(INFO) <<machine_id<< ":*********In LockManagerThread:  receive remaster txn: "<<txn->txn_id();
 }**/
 
         if (mode_ == 2 && txn->remaster_txn() == false) {
@@ -557,8 +557,8 @@ LOG(INFO) <<machine_id<< ":*********In LockManagerThread:  receive remaster txn:
     // Report throughput.
     if (GetTime() > time + 1) {
       double total_time = GetTime() - time;
-      // LOG(INFO) << "Machine: "<<machine_id<<" Completed "<< (static_cast<double>(txns) / total_time)
-      //            << " txns/sec, "<< executing_txns << " executing, "<< pending_txns << " pending";
+LOG(ERROR) << "Machine: "<<machine_id<<" Completed "<< (static_cast<double>(txns) / total_time)
+                 << " txns/sec, "<< executing_txns << " executing, "<< pending_txns << " pending";
 
       // Reset txn count.
       time = GetTime();
